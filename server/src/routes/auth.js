@@ -213,8 +213,9 @@ function generateAccessToken(userId) {
 
 async function generateRefreshToken(userId) {
   const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+  const crypto = require('crypto');
   const token = jwt.sign(
-    { userId },
+    { userId, jti: crypto.randomUUID() },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn }
   );
