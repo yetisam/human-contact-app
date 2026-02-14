@@ -46,7 +46,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/users', require('./routes/users'));
-// app.use('/api/v1/verification', require('./routes/verification'));
+app.use('/api/v1/verification', require('./routes/verification'));
 // app.use('/api/v1/matches', require('./routes/matches'));
 // app.use('/api/v1/connections', require('./routes/connections'));
 // app.use('/api/v1/chat', require('./routes/chat'));

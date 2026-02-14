@@ -5,6 +5,8 @@ import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/profile/screens/profile_setup_screen.dart';
 import '../features/discovery/screens/home_screen.dart';
+import '../features/verification/screens/email_verification_screen.dart';
+import '../features/verification/screens/phone_verification_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 
 /// App route paths
@@ -77,6 +79,14 @@ GoRouter createAppRouter(Ref ref) {
       GoRoute(
         path: Routes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.emailVerify,
+        builder: (context, state) => const EmailVerificationScreen(),
+      ),
+      GoRoute(
+        path: Routes.phoneVerify,
+        builder: (context, state) => const PhoneVerificationScreen(),
       ),
       GoRoute(
         path: Routes.profileSetup,

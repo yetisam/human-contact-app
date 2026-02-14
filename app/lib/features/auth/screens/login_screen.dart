@@ -41,7 +41,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (mounted) {
         final user = ref.read(authProvider).user;
-        if (user != null && !user.isProfileComplete) {
+        if (user == null) return;
+
+        // Route based on onboarding progress
+        if (!user.emailVerified) {
+          context.go(Routes.emailVerify);
+        } else if (!user.phoneVerified) {
+          context.go(Routes.phoneVerify);
+        } else if (!user.isProfileComplete) {
           context.go(Routes.profileSetup);
         } else {
           context.go(Routes.home);

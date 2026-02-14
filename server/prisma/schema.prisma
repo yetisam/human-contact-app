@@ -90,6 +90,7 @@ model VerificationRecord {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, type], name: "userId_type")
   @@index([userId, type])
   @@map("verification_records")
 }

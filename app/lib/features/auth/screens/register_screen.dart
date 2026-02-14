@@ -53,7 +53,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       );
 
       if (mounted) {
-        context.go(Routes.profileSetup);
+        context.go(Routes.emailVerify);
       }
     } catch (e) {
       if (mounted) {
