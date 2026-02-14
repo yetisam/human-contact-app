@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.dart_tool/
+.packages
+
+# Flutter
+app/build/
+app/.dart_tool/
+app/.packages
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/android/.gradle/
+app/android/local.properties
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/.pub-cache/
+app/.pub/
+
+# Server
+server/node_modules/
+server/dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+*.log
+
+# Coverage
+coverage/
+*.lcov
+
+# Prisma
+server/prisma/migrations/migration_lock.toml

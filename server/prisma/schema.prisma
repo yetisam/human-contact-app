@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// USERS & AUTHENTICATION
+// ============================================================
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  emailVerified      Boolean   @default(false)
+  phone              String?   @unique
+  phoneVerified      Boolean   @default(false)
+  passwordHash       String
+  firstName          String
+  age                Int
+  locationLat        Float?    // Approximate (rounded to ~1km)
+  locationLng        Float?    // Approximate (rounded to ~1km)
+  city               String?
+  state              String?
+  country            String    @default("AU")
+  purposeStatement   String    // 50-200 chars: "Why I'm seeking connection"
+  meetingPreference  Boolean   @default(false) // Prefer to meet in person first
+  avatarIcon         String?   // Abstract avatar selection (not photo)
+  subscriptionTier   SubscriptionTier @default(FREE)
+  status             UserStatus @default(PENDING_VERIFICATION)
+  lastActiveAt       DateTime  @default(now())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  interests              UserInterest[]
+  verificationRecords    VerificationRecord[]
+  sentRequests           Connection[]          @relation("SentConnections")
+  receivedRequests       Connection[]          @relation("ReceivedConnections")
+  sentMessages           Message[]
+  sentExchangeRequests   ContactExchange[]     @relation("ExchangeRequester")
+  receivedExchanges      ContactExchange[]     @relation("ExchangeRecipient")
+  generatedLinks         DirectLink[]
+  proposedMeetings       Meeting[]             @relation("MeetingProposer")
+  receivedMeetings       Meeting[]             @relation("MeetingRecipient")
+  checkins               Checkin[]
+  emergencyContacts      EmergencyContact[]
+  reportsFiled           Report[]              @relation("Reporter")
+  reportsAgainst         Report[]              @relation("ReportedUser")
+  blocksInitiated        Block[]               @relation("Blocker")
+  blocksReceived         Block[]               @relation("Blocked")
+  notificationPrefs      NotificationPreference?
+  refreshTokens          RefreshToken[]
+
+  @@index([locationLat, locationLng])
+  @@index([status])
+  @@index([lastActiveAt])
+  @@map("users")
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  BANNED
+  DEACTIVATED
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+}
+
+// ============================================================
+// VERIFICATION
+// ============================================================
+
+model VerificationRecord {
+  id                String             @id @default(uuid())
+  userId            String
+  type              VerificationType
+  status            VerificationStatus @default(PENDING)
+  providerRef       String?            // Persona inquiry ID
+  providerData      Json?              // Non-sensitive metadata from provider
+  failureReason     String?
+  completedAt       DateTime?
+  createdAt         DateTime           @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("verification_records")
+}
+
+enum VerificationType {
+  EMAIL
+  PHONE
+  GOVERNMENT_ID
+  BACKGROUND_CHECK
+}
+
+enum VerificationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+// ============================================================
+// INTERESTS & MATCHING
+// ============================================================
+
+model InterestCategory {
+  id        String     @id @default(uuid())
+  name      String     @unique // e.g., "Sports", "Arts", "Technology"
+  icon      String?    // Emoji or icon reference
+  sortOrder Int        @default(0)
+  interests Interest[]
+
+  @@map("interest_categories")
+}
+
+model Interest {
+  id         String   @id @default(uuid())
+  name       String   @unique // e.g., "Hiking", "Photography", "Cooking"
+  categoryId String
+  sortOrder  Int      @default(0)
+
+  category InterestCategory @relation(fields: [categoryId], references: [id])
+  users    UserInterest[]
+
+  @@index([categoryId])
+  @@map("interests")
+}
+
+model UserInterest {
+  userId     String
+  interestId String
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, interestId])
+  @@map("user_interests")
+}
+
+// ============================================================
+// CONNECTIONS & CHAT
+// ============================================================
+
+model Connection {
+  id                     String           @id @default(uuid())
+  requesterId            String
+  recipientId            String
+  status                 ConnectionStatus @default(PENDING)
+  introMessage           String           // 20-200 chars
+  chatOpenedAt           DateTime?
+  chatExpiresAt          DateTime?
+  messagesRemainingReq   Int              @default(10) // Requester messages left
+  messagesRemainingRec   Int              @default(10) // Recipient messages left
+  contactExchanged       Boolean          @default(false)
+  meetingScheduled       Boolean          @default(false)
+  closedBy               String?          // userId who closed, if manually closed
+  directLinkId           String?          // If connection was via direct link
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  requester  User              @relation("SentConnections", fields: [requesterId], references: [id])
+  recipient  User              @relation("ReceivedConnections", fields: [recipientId], references: [id])
+  directLink DirectLink?       @relation(fields: [directLinkId], references: [id])
+  messages   Message[]
+  exchanges  ContactExchange[]
+  meetings   Meeting[]
+
+  @@unique([requesterId, recipientId])
+  @@index([recipientId, status])
+  @@index([status, chatExpiresAt])
+  @@map("connections")
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE       // Chat window open
+  GRADUATED    // Contact exchanged
+  EXPIRED      // Chat window timed out
+  CLOSED       // Manually closed
+  DECLINED
+  REPORTED
+}
+
+model Message {
+  id           String   @id @default(uuid())
+  connectionId String
+  senderId     String
+  content      String   // Encrypted, 500 char limit
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime? // Soft delete after 30 days
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  sender     User       @relation(fields: [senderId], references: [id])
+
+  @@index([connectionId, createdAt])
+  @@map("messages")
+}
+
+// ============================================================
+// CONTACT EXCHANGE
+// ============================================================
+
+model ContactExchange {
+  id              String              @id @default(uuid())
+  connectionId    String
+  requesterId     String
+  recipientId     String
+  status          ExchangeStatus      @default(PENDING)
+
+  // What requester offers to share
+  reqShareEmail   Boolean             @default(false)
+  reqSharePhone   Boolean             @default(false)
+
+  // What requester is asking for
+  reqWantsEmail   Boolean             @default(false)
+  reqWantsPhone   Boolean             @default(false)
+
+  // What recipient actually shares (on approval)
+  recShareEmail   Boolean             @default(false)
+  recSharePhone   Boolean             @default(false)
+
+  revealExpiresAt DateTime?           // 5-min reveal countdown
+  archiveExpiresAt DateTime?          // 7-day access window
+  completedAt     DateTime?
+  createdAt       DateTime            @default(now())
+
+  connection Connection @relation(fields: [connectionId], references: [id])
+  requester  User       @relation("ExchangeRequester", fields: [requesterId], references: [id])
+  recipient  User       @relation("ExchangeRecipient", fields: [recipientId], references: [id])
+
+  @@index([connectionId])
+  @@map("contact_exchanges")
+}
+
+enum ExchangeStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  EXPIRED
+}
+
+// ============================================================
+// DIRECT CONNECTION LINKS
+// ============================================================
+
+model DirectLink {
+  id          String    @id @default(uuid())
+  userId      String    // User who generated the link
+  token       String    @unique // Short unique token
+  usedBy      String?   // User who used the link
+  usedAt      DateTime?
+  expiresAt   DateTime  // 7 days from creation
+  createdAt   DateTime  @default(now())
+
+  creator     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connections Connection[]
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("direct_links")
+}
+
+// ============================================================
+// MEETINGS & SAFETY
+// ============================================================
+
+model Meeting {
+  id            String        @id @default(uuid())
+  connectionId  String
+  proposerId    String
+  recipientId   String
+  status        MeetingStatus @default(PROPOSED)
+  venue         String        // Public venue description
+  venueLat      Float?
+  venueLng      Float?
+  scheduledAt   DateTime
+  note          String?       // 100 chars
+  safetyEnabled Boolean       @default(false)
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelledBy   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  connection Connection @relation(fields: [connectionId], references: [id])
+  proposer   User       @relation("MeetingProposer", fields: [proposerId], references: [id])
+  recipient  User       @relation("MeetingRecipient", fields: [recipientId], references: [id])
+  checkins   Checkin[]
+
+  @@index([connectionId])
+  @@index([scheduledAt])
+  @@map("meetings")
+}
+
+enum MeetingStatus {
+  PROPOSED
+  ACCEPTED
+  COUNTER_PROPOSED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Checkin {
+  id         String       @id @default(uuid())
+  meetingId  String
+  userId     String
+  type       CheckinType
+  status     CheckinStatus @default(PENDING)
+  dueAt      DateTime
+  respondedAt DateTime?
+  createdAt  DateTime     @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([meetingId, userId])
+  @@index([status, dueAt])
+  @@map("checkins")
+}
+
+enum CheckinType {
+  HEADING_TO     // 15 min before
+  ARRIVED        // At meeting time
+  MIDWAY         // 30 min after start
+  DEPARTED       // At expected end
+}
+
+enum CheckinStatus {
+  PENDING
+  CONFIRMED
+  MISSED
+  ESCALATED
+}
+
+model EmergencyContact {
+  id           String @id @default(uuid())
+  userId       String
+  name         String
+  phone        String // Encrypted
+  relationship String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("emergency_contacts")
+}
+
+// ============================================================
+// SAFETY & MODERATION
+// ============================================================
+
+model Report {
+  id             String       @id @default(uuid())
+  reporterId     String
+  reportedUserId String
+  category       ReportCategory
+  description    String?      // 500 chars
+  context        Json?        // Auto-attached chat/profile data
+  status         ReportStatus @default(PENDING)
+  reviewedBy     String?
+  reviewNote     String?
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  reporter     User @relation("Reporter", fields: [reporterId], references: [id])
+  reportedUser User @relation("ReportedUser", fields: [reportedUserId], references: [id])
+
+  @@index([reportedUserId, status])
+  @@index([status, createdAt])
+  @@map("reports")
+}
+
+enum ReportCategory {
+  INAPPROPRIATE_CONTENT
+  SUSPICIOUS_PROFILE
+  SAFETY_CONCERN
+  HARASSMENT
+  SPAM
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  ACTION_TAKEN
+  DISMISSED
+}
+
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+// ============================================================
+// NOTIFICATIONS & SETTINGS
+// ============================================================
+
+model NotificationPreference {
+  id                    String  @id @default(uuid())
+  userId                String  @unique
+  connectionRequests    Boolean @default(true)
+  connectionAccepted    Boolean @default(true)
+  newMessages           Boolean @default(true)
+  chatExpiring          Boolean @default(true)
+  contactExchange       Boolean @default(true)
+  meetingUpdates        Boolean @default(true)
+  safetyCheckins        Boolean @default(true)
+  quietHoursEnabled     Boolean @default(false)
+  quietHoursStart       String? // "22:00" format
+  quietHoursEnd         String? // "08:00" format
+  quietHoursTimezone    String  @default("UTC")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// ============================================================
+// SUBSCRIPTIONS
+// ============================================================
+
+model Subscription {
+  id                String             @id @default(uuid())
+  userId            String             @unique
+  tier              SubscriptionTier   @default(FREE)
+  stripeCustomerId  String?
+  stripeSubId       String?
+  currentPeriodEnd  DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+// ============================================================
+// AUTH TOKENS
+// ============================================================
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String   // e.g., "user.registered", "connection.accepted", "report.filed"
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
