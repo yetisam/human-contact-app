@@ -1,7 +1,11 @@
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/onboarding/screens/welcome_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/login_screen.dart';
+import '../features/profile/screens/profile_setup_screen.dart';
+import '../features/discovery/screens/home_screen.dart';
+import '../features/auth/providers/auth_provider.dart';
 
 /// App route paths
 class Routes {
@@ -40,21 +44,53 @@ class Routes {
 }
 
 /// App router configuration
-final GoRouter appRouter = GoRouter(
-  initialLocation: Routes.welcome,
-  routes: [
-    GoRoute(
-      path: Routes.welcome,
-      builder: (context, state) => const WelcomeScreen(),
-    ),
-    GoRoute(
-      path: Routes.register,
-      builder: (context, state) => const RegisterScreen(),
-    ),
-    GoRoute(
-      path: Routes.login,
-      builder: (context, state) => const LoginScreen(),
-    ),
-    // More routes will be added as screens are built
-  ],
-);
+GoRouter createAppRouter(Ref ref) {
+  return GoRouter(
+    initialLocation: Routes.welcome,
+    redirect: (context, state) {
+      final auth = ref.read(authProvider);
+      final isAuth = auth.isAuthenticated;
+      final isAuthRoute = state.matchedLocation == Routes.welcome ||
+          state.matchedLocation == Routes.login ||
+          state.matchedLocation == Routes.register;
+
+      // If authenticated and on auth page, redirect to home or profile setup
+      if (isAuth && isAuthRoute) {
+        final user = auth.user;
+        if (user != null && !user.isProfileComplete) {
+          return Routes.profileSetup;
+        }
+        return Routes.home;
+      }
+
+      return null; // No redirect
+    },
+    routes: [
+      GoRoute(
+        path: Routes.welcome,
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: Routes.register,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: Routes.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.profileSetup,
+        builder: (context, state) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: Routes.home,
+        builder: (context, state) => const HomeScreen(),
+      ),
+    ],
+  );
+}
+
+/// Provider for the router
+final appRouterProvider = Provider<GoRouter>((ref) {
+  return createAppRouter(ref);
+});

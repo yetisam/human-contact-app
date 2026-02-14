@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../config/routes.dart';
 import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_text_field.dart';
+import '../providers/auth_provider.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -44,25 +46,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Call auth service to register
-      // final authService = ref.read(authServiceProvider);
-      // await authService.register(
-      //   email: _emailController.text.trim(),
-      //   password: _passwordController.text,
-      //   firstName: _firstNameController.text.trim(),
-      // );
-
-      // Simulate network delay for now
-      await Future.delayed(const Duration(seconds: 1));
+      await ref.read(authProvider.notifier).register(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        firstName: _firstNameController.text.trim(),
+      );
 
       if (mounted) {
-        // Navigate to email verification
-        context.go(Routes.welcome); // TODO: Change to emailVerify
+        context.go(Routes.profileSetup);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration failed: $e')),
+          SnackBar(content: Text(e.toString())),
         );
       }
     } finally {
@@ -83,7 +79,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back button
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () => context.pop(),
@@ -91,7 +86,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: HCSpacing.lg),
 
-                  // Header
                   Text(
                     'Create your account',
                     style: Theme.of(context).textTheme.headlineMedium,
@@ -105,7 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: HCSpacing.xl),
 
-                  // First name
                   HCTextField(
                     label: 'First name',
                     hint: 'How people will see you',
@@ -124,7 +117,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: HCSpacing.md),
 
-                  // Email
                   HCTextField(
                     label: 'Email',
                     hint: 'you@example.com',
@@ -144,7 +136,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: HCSpacing.md),
 
-                  // Password
                   HCTextField(
                     label: 'Password',
                     hint: 'At least 8 characters',
@@ -161,18 +152,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 8) {
-                        return 'Password must be at least 8 characters';
-                      }
+                      if (value == null || value.isEmpty) return 'Please enter a password';
+                      if (value.length < 8) return 'Password must be at least 8 characters';
                       return null;
                     },
                   ),
                   const SizedBox(height: HCSpacing.md),
 
-                  // Confirm password
                   HCTextField(
                     label: 'Confirm password',
                     controller: _confirmPasswordController,
@@ -188,21 +174,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
+                      if (value != _passwordController.text) return 'Passwords do not match';
                       return null;
                     },
                   ),
                   const SizedBox(height: HCSpacing.lg),
 
-                  // Terms checkbox
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                        width: 24,
-                        height: 24,
+                        width: 24, height: 24,
                         child: Checkbox(
                           value: _agreedToTerms,
                           onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
@@ -217,16 +199,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextSpan(
                               text: 'I agree to the ',
                               style: Theme.of(context).textTheme.bodyMedium,
-                              children: [
-                                TextSpan(
-                                  text: 'Terms of Service',
-                                  style: TextStyle(color: HCColors.primary),
-                                ),
-                                const TextSpan(text: ' and '),
-                                TextSpan(
-                                  text: 'Privacy Policy',
-                                  style: TextStyle(color: HCColors.primary),
-                                ),
+                              children: const [
+                                TextSpan(text: 'Terms of Service', style: TextStyle(color: HCColors.primary)),
+                                TextSpan(text: ' and '),
+                                TextSpan(text: 'Privacy Policy', style: TextStyle(color: HCColors.primary)),
                               ],
                             ),
                           ),
@@ -236,7 +212,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: HCSpacing.xl),
 
-                  // Register button
                   HCButton(
                     label: 'Create Account',
                     onPressed: _agreedToTerms ? _register : null,
@@ -244,19 +219,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: HCSpacing.md),
 
-                  // Login link
                   Center(
                     child: TextButton(
                       onPressed: () => context.pushReplacement(Routes.login),
                       child: Text.rich(
                         TextSpan(
                           text: 'Already have an account? ',
-                          style: TextStyle(color: HCColors.textMuted),
-                          children: [
-                            TextSpan(
-                              text: 'Sign in',
-                              style: TextStyle(color: HCColors.primary),
-                            ),
+                          style: const TextStyle(color: HCColors.textMuted),
+                          children: const [
+                            TextSpan(text: 'Sign in', style: TextStyle(color: HCColors.primary)),
                           ],
                         ),
                       ),

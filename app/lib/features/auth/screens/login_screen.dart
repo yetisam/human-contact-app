@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../config/routes.dart';
 import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_text_field.dart';
+import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -32,16 +34,23 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Call auth service to login
-      await Future.delayed(const Duration(seconds: 1));
+      await ref.read(authProvider.notifier).login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
       if (mounted) {
-        context.go(Routes.welcome); // TODO: Change to home
+        final user = ref.read(authProvider).user;
+        if (user != null && !user.isProfileComplete) {
+          context.go(Routes.profileSetup);
+        } else {
+          context.go(Routes.home);
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
+          SnackBar(content: Text(e.toString())),
         );
       }
     } finally {
@@ -62,7 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back button
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () => context.pop(),
@@ -70,7 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: HCSpacing.xl),
 
-                  // Header
                   Text(
                     'Welcome back',
                     style: Theme.of(context).textTheme.headlineMedium,
@@ -84,7 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: HCSpacing.xxl),
 
-                  // Email
                   HCTextField(
                     label: 'Email',
                     hint: 'you@example.com',
@@ -93,15 +99,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: Icons.email_outlined,
                     textInputAction: TextInputAction.next,
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your email';
-                      }
+                      if (value == null || value.trim().isEmpty) return 'Please enter your email';
                       return null;
                     },
                   ),
                   const SizedBox(height: HCSpacing.md),
 
-                  // Password
                   HCTextField(
                     label: 'Password',
                     controller: _passwordController,
@@ -117,27 +120,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
+                      if (value == null || value.isEmpty) return 'Please enter your password';
                       return null;
                     },
                   ),
                   const SizedBox(height: HCSpacing.sm),
 
-                  // Forgot password
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        // TODO: Forgot password flow
-                      },
+                      onPressed: () {},
                       child: const Text('Forgot password?'),
                     ),
                   ),
                   const SizedBox(height: HCSpacing.lg),
 
-                  // Login button
                   HCButton(
                     label: 'Sign In',
                     onPressed: _login,
@@ -145,19 +142,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: HCSpacing.lg),
 
-                  // Register link
                   Center(
                     child: TextButton(
                       onPressed: () => context.pushReplacement(Routes.register),
                       child: Text.rich(
                         TextSpan(
                           text: "Don't have an account? ",
-                          style: TextStyle(color: HCColors.textMuted),
-                          children: [
-                            TextSpan(
-                              text: 'Sign up',
-                              style: TextStyle(color: HCColors.primary),
-                            ),
+                          style: const TextStyle(color: HCColors.textMuted),
+                          children: const [
+                            TextSpan(text: 'Sign up', style: TextStyle(color: HCColors.primary)),
                           ],
                         ),
                       ),
