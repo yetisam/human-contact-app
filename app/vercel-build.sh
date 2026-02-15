@@ -7,8 +7,12 @@ FLUTTER_VERSION="3.29.3"
 curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" | tar xJ -C "$HOME"
 export PATH="$PATH:$HOME/flutter/bin"
 
+# Fix git ownership check (Vercel runs as root)
+git config --global --add safe.directory '*'
+export FLUTTER_ROOT="$HOME/flutter"
+
 echo "=== Flutter version ==="
-flutter --version
+flutter --version --no-analytics
 
 echo "=== Building Flutter web (release) ==="
 flutter build web --release --no-tree-shake-icons
