@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_card.dart';
@@ -273,36 +274,39 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
 
           return Padding(
             padding: const EdgeInsets.only(bottom: HCSpacing.md),
-            child: HCCard(
-              useGradient: true,
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: HCColors.success.withValues(alpha: 0.2),
-                    child: const Icon(Icons.chat_bubble, color: HCColors.success, size: 20),
-                  ),
-                  const SizedBox(width: HCSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${requester['firstName']} ↔ ${recipient['firstName']}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (conn['chatExpiresAt'] != null)
-                          Text(
-                            'Chat expires: ${_formatExpiry(conn['chatExpiresAt'])}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: HCColors.accent,
-                            ),
-                          ),
-                      ],
+            child: GestureDetector(
+              onTap: () => context.push('/chat/${conn['id']}'),
+              child: HCCard(
+                useGradient: true,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: HCColors.success.withValues(alpha: 0.2),
+                      child: const Icon(Icons.chat_bubble, color: HCColors.success, size: 20),
                     ),
-                  ),
-                  const Icon(Icons.arrow_forward_ios, color: HCColors.primary, size: 16),
-                ],
+                    const SizedBox(width: HCSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${requester['firstName']} ↔ ${recipient['firstName']}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (conn['chatExpiresAt'] != null)
+                            Text(
+                              'Chat expires: ${_formatExpiry(conn['chatExpiresAt'])}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: HCColors.accent,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, color: HCColors.primary, size: 16),
+                  ],
+                ),
               ),
             ),
           );
