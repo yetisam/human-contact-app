@@ -3,48 +3,53 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../config/routes.dart';
-import '../../../widgets/hc_card.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'discovery_screen.dart';
+import '../screens/connections_screen.dart';
+import '../screens/profile_tab_screen.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authProvider);
-    final user = auth.user;
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _currentIndex = 0;
+
+  final _screens = const [
+    DiscoveryScreen(),
+    ConnectionsScreen(),
+    ProfileTabScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: HCColors.bgGradient),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(HCSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
+          child: Column(
+            children: [
+              // App bar
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: HCSpacing.lg,
+                  vertical: HCSpacing.sm,
+                ),
+                child: Row(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hey ${user?.firstName ?? 'there'} 👋',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Ready to make a real connection?',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
+                    Text(
+                      'Human Contact',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: HCColors.primary,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // Logout button (temp)
+                    const Spacer(),
                     IconButton(
-                      icon: const Icon(Icons.logout, color: HCColors.textMuted),
+                      icon: const Icon(Icons.logout, color: HCColors.textMuted, size: 20),
                       onPressed: () async {
                         await ref.read(authProvider.notifier).logout();
                         if (context.mounted) context.go(Routes.welcome);
@@ -52,122 +57,34 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: HCSpacing.xl),
+              ),
 
-                // Status card
-                HCCard(
-                  useGradient: true,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.shield, color: HCColors.accent, size: 24),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Account Status',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: HCSpacing.md),
-                      _buildStatusRow(
-                        context,
-                        'Email verified',
-                        user?.verification?.email ?? false,
-                      ),
-                      _buildStatusRow(
-                        context,
-                        'Phone verified',
-                        user?.verification?.phone ?? false,
-                      ),
-                      _buildStatusRow(
-                        context,
-                        'ID verified',
-                        user?.verification?.governmentId ?? false,
-                      ),
-                      _buildStatusRow(
-                        context,
-                        'Profile complete',
-                        user?.isProfileComplete ?? false,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: HCSpacing.lg),
-
-                // Interests card
-                if (user != null && user.interests.isNotEmpty) ...[
-                  Text(
-                    'Your interests',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: HCSpacing.sm),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: user.interests.map((interest) {
-                      return Chip(
-                        label: Text(interest.name),
-                        avatar: interest.categoryIcon != null
-                            ? Text(interest.categoryIcon!)
-                            : null,
-                      );
-                    }).toList(),
-                  ),
-                ],
-
-                const Spacer(),
-
-                // Coming soon notice
-                HCCard(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.rocket_launch, color: HCColors.primary),
-                      const SizedBox(width: HCSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Discovery coming soon',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Match suggestions and connections are being built next.',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              // Current screen
+              Expanded(child: _screens[_currentIndex]),
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusRow(BuildContext context, String label, bool completed) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(
-            completed ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: completed ? HCColors.success : HCColors.textMuted,
-            size: 20,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        backgroundColor: HCColors.bgDark,
+        indicatorColor: HCColors.primary.withValues(alpha: 0.2),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore, color: HCColors.primary),
+            label: 'Discover',
           ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: completed ? HCColors.textPrimary : HCColors.textMuted,
-            ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people, color: HCColors.primary),
+            label: 'Connections',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person, color: HCColors.primary),
+            label: 'Profile',
           ),
         ],
       ),
