@@ -9,6 +9,7 @@ import '../features/verification/screens/email_verification_screen.dart';
 import '../features/verification/screens/phone_verification_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/chat/screens/chat_screen.dart';
+import '../features/exchange/screens/exchange_screen.dart';
 
 /// App route paths
 class Routes {
@@ -102,6 +103,13 @@ GoRouter createAppRouter(Ref ref) {
         builder: (context, state) {
           final connectionId = state.pathParameters['connectionId']!;
           return ChatScreen(connectionId: connectionId);
+        },
+      ),
+      GoRoute(
+        path: Routes.exchange,
+        builder: (context, state) {
+          final connectionId = state.pathParameters['connectionId']!;
+          return ExchangeScreen(connectionId: connectionId);
         },
       ),
     ],

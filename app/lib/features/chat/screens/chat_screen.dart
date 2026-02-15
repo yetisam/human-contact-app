@@ -303,6 +303,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ],
             ),
           ),
+          // Exchange contact button
+          IconButton(
+            icon: const Icon(Icons.swap_horiz, color: HCColors.accent),
+            tooltip: 'Exchange contacts',
+            onPressed: () => context.push('/exchange/${widget.connectionId}'),
+          ),
           // Messages remaining badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
