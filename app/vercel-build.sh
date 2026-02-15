@@ -12,7 +12,8 @@ git config --global --add safe.directory '*'
 export FLUTTER_ROOT="$HOME/flutter"
 
 echo "=== Flutter version ==="
-flutter --version --no-analytics
+flutter config --no-analytics 2>/dev/null || true
+flutter --version
 
 echo "=== Building Flutter web (release) ==="
 flutter build web --release --no-tree-shake-icons
