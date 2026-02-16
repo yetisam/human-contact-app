@@ -341,31 +341,64 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
     final contact = otherPerson['contact'] as Map<String, dynamic>;
     final myShared = _revealData!['myShared'] as Map<String, dynamic>;
     final isRevealActive = _timeRemaining > Duration.zero;
+    final firstName = otherPerson['firstName'] ?? 'They';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Countdown banner
-        if (isRevealActive)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(HCSpacing.md),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [HCColors.primary.withValues(alpha: 0.3), HCColors.accent.withValues(alpha: 0.3)],
-              ),
-              borderRadius: BorderRadius.circular(HCRadius.md),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  '${_timeRemaining.inMinutes}:${(_timeRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: HCColors.primary),
-                ),
-                const Text('Save these details before the timer runs out!', style: TextStyle(fontSize: 12)),
-              ],
-            ),
+        // ⚠️ BIG WARNING BANNER
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(HCSpacing.lg),
+          decoration: BoxDecoration(
+            color: HCColors.error.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(HCRadius.md),
+            border: Border.all(color: HCColors.error.withValues(alpha: 0.4)),
           ),
+          child: Column(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: HCColors.error, size: 36),
+              const SizedBox(height: 8),
+              const Text(
+                '⚠️ SAVE THESE DETAILS NOW',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: HCColors.error,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'These contact details will be permanently deleted from our system after the timer expires. '
+                'Copy them to your phone contacts, notes app, or anywhere safe.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: HCColors.error.withValues(alpha: 0.9),
+                  height: 1.4,
+                ),
+              ),
+              if (isRevealActive) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: HCColors.error.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(HCRadius.lg),
+                  ),
+                  child: Text(
+                    '${_timeRemaining.inMinutes}:${(_timeRemaining.inSeconds % 60).toString().padLeft(2, '0')} remaining',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: HCColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
 
         const SizedBox(height: HCSpacing.xl),
         const Icon(Icons.celebration, color: HCColors.accent, size: 48),
@@ -373,12 +406,12 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
         Text('Contact revealed! 🎉', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: HCSpacing.sm),
         Text(
-          '${otherPerson['firstName']}\'s contact info:',
+          '$firstName\'s contact info:',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: HCSpacing.md),
 
-        // Their contact details
+        // Their contact details — with prominent copy buttons
         if (contact['email'] != null)
           _buildContactCard('Email', contact['email'] as String, Icons.email),
         if (contact['phone'] != null)
@@ -391,6 +424,89 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HCColors.textMuted),
             ),
           ),
+
+        const SizedBox(height: HCSpacing.lg),
+
+        // Copy All button
+        if (contact.isNotEmpty)
+          HCButton(
+            label: 'Copy All Details',
+            icon: Icons.copy_all,
+            onPressed: () {
+              final buffer = StringBuffer();
+              buffer.writeln('$firstName\'s Contact Info:');
+              if (contact['email'] != null) buffer.writeln('Email: ${contact['email']}');
+              if (contact['phone'] != null) buffer.writeln('Phone: ${contact['phone']}');
+              Clipboard.setData(ClipboardData(text: buffer.toString()));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ All details copied to clipboard!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+          ),
+
+        const SizedBox(height: HCSpacing.xl),
+
+        // Confirmation button
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(HCSpacing.md),
+          decoration: BoxDecoration(
+            color: HCColors.bgCard,
+            borderRadius: BorderRadius.circular(HCRadius.md),
+            border: Border.all(color: HCColors.border),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Have you saved the details?',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Once you leave this screen or the timer expires, '
+                '$firstName\'s details will be permanently removed.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: HCColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: HCSpacing.md),
+              HCButton(
+                label: 'I\'ve Saved the Details ✓',
+                icon: Icons.check_circle,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: HCColors.bgCard,
+                      title: const Text('Confirm'),
+                      content: Text(
+                        'Are you sure you\'ve saved $firstName\'s contact details? '
+                        'They will be permanently deleted from Human Contact after this.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Go back', style: TextStyle(color: HCColors.textSecondary)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            context.go('/home');
+                          },
+                          child: const Text('Yes, I\'ve saved them', style: TextStyle(color: Colors.green)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
 
         const SizedBox(height: HCSpacing.xl),
 
@@ -441,35 +557,49 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
 
   Widget _buildContactCard(String label, String value, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: HCSpacing.sm),
+      padding: const EdgeInsets.only(bottom: HCSpacing.md),
       child: HCCard(
         useGradient: true,
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: HCColors.primary),
-            const SizedBox(width: HCSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: Theme.of(context).textTheme.bodySmall),
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: HCColors.primary,
-                    ),
-                  ),
-                ],
+            Row(
+              children: [
+                Icon(icon, color: HCColors.primary, size: 24),
+                const SizedBox(width: HCSpacing.sm),
+                Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: HCColors.textSecondary)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SelectableText(
+              value,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: HCColors.primary,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.copy, color: HCColors.textMuted, size: 20),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('$label copied to clipboard')),
-                );
-              },
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.copy, size: 18),
+                label: Text('Copy $label'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: HCColors.primary,
+                  side: const BorderSide(color: HCColors.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: value));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✅ $label copied!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),

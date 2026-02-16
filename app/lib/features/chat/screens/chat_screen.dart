@@ -231,6 +231,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               // Expiry/limit banner
               if (info != null) _buildStatusBanner(info, isExpired),
 
+              // Exchange CTA banner (shows when messages running low)
+              _buildExchangeBanner(),
+
               // Messages
               Expanded(
                 child: _messages.isEmpty
@@ -303,12 +306,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ],
             ),
           ),
-          // Exchange contact button
-          IconButton(
-            icon: const Icon(Icons.swap_horiz, color: HCColors.accent),
-            tooltip: 'Exchange contacts',
-            onPressed: () => context.push('/exchange/${widget.connectionId}'),
-          ),
+          // Exchange contact button — prominent
+          _buildExchangeHeaderButton(),
+          const SizedBox(width: 6),
           // Messages remaining badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -328,6 +328,86 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildExchangeHeaderButton() {
+    return InkWell(
+      onTap: () => context.push('/exchange/${widget.connectionId}'),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [HCColors.accent, Color(0xFFE88B00)],
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.swap_horiz, color: Colors.white, size: 16),
+            SizedBox(width: 4),
+            Text(
+              'Exchange',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Prominent exchange CTA shown when messages are running low
+  Widget _buildExchangeBanner() {
+    if (_myRemaining > 5 || _connectionInfo?.isExpired == true) {
+      return const SizedBox.shrink();
+    }
+
+    return GestureDetector(
+      onTap: () => context.push('/exchange/${widget.connectionId}'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: HCSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              HCColors.accent.withValues(alpha: 0.15),
+              HCColors.primary.withValues(alpha: 0.15),
+            ],
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.swap_horiz, color: HCColors.accent, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _myRemaining <= 2 ? 'Running out of messages!' : 'Ready to connect outside the app?',
+                    style: const TextStyle(
+                      color: HCColors.accent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const Text(
+                    'Tap to exchange real contact details',
+                    style: TextStyle(color: HCColors.textSecondary, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: HCColors.accent, size: 14),
+          ],
+        ),
       ),
     );
   }

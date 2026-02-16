@@ -19,12 +19,13 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
   List<dynamic> _received = [];
   List<dynamic> _sent = [];
   List<dynamic> _active = [];
+  List<dynamic> _graduated = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadConnections();
   }
 
@@ -43,6 +44,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
         service.getConnections(type: 'received', status: 'PENDING'),
         service.getConnections(type: 'sent', status: 'PENDING'),
         service.getConnections(status: 'ACTIVE'),
+        service.getConnections(status: 'GRADUATED'),
       ]);
 
       if (mounted) {
@@ -50,6 +52,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
           _received = results[0]['connections'] as List;
           _sent = results[1]['connections'] as List;
           _active = results[2]['connections'] as List;
+          _graduated = results[3]['connections'] as List;
           _loading = false;
         });
       }
@@ -102,7 +105,10 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
             Tab(text: 'Received (${_received.length})'),
             Tab(text: 'Sent (${_sent.length})'),
             Tab(text: 'Active (${_active.length})'),
+            Tab(text: 'Exchanged (${_graduated.length})'),
           ],
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
         ),
         Expanded(
           child: _loading
@@ -113,6 +119,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
                     _buildReceivedList(),
                     _buildSentList(),
                     _buildActiveList(),
+                    _buildGraduatedList(),
                   ],
                 ),
         ),
@@ -307,6 +314,59 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
                     const Icon(Icons.arrow_forward_ios, color: HCColors.primary, size: 16),
                   ],
                 ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGraduatedList() {
+    if (_graduated.isEmpty) {
+      return _buildEmptyState('No exchanged contacts yet');
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadConnections,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(HCSpacing.md),
+        itemCount: _graduated.length,
+        itemBuilder: (context, index) {
+          final conn = _graduated[index];
+          final requester = conn['requester'];
+          final recipient = conn['recipient'];
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: HCSpacing.md),
+            child: HCCard(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.green.withValues(alpha: 0.2),
+                    child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  ),
+                  const SizedBox(width: HCSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${requester['firstName']} ↔ ${recipient['firstName']}',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(
+                          'Contacts exchanged ✓',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.people, color: Colors.green, size: 20),
+                ],
               ),
             ),
           );
