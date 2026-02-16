@@ -5,8 +5,8 @@
   "description": "Human Contact API Server",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "build": "npx prisma generate && npx prisma migrate deploy && node prisma/seed.js",
+    "start": "npx prisma migrate deploy && node prisma/seed.js && node src/index.js",
+    "build": "npx prisma generate",
     "dev": "nodemon src/index.js",
     "test": "jest --config test/jest.config.js",
     "test:watch": "jest --config test/jest.config.js --watch",
