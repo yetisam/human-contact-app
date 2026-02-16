@@ -47,6 +47,24 @@ class Routes {
   static const String settings = '/settings';
 }
 
+/// Determine the correct destination for an authenticated user
+/// based on their verification and profile state
+String _getAuthenticatedRoute(dynamic user) {
+  if (user == null) return Routes.home;
+
+  // Step 1: Email verification
+  if (!user.emailVerified) return Routes.emailVerify;
+
+  // Step 2: Phone verification
+  if (!user.phoneVerified) return Routes.phoneVerify;
+
+  // Step 3: Profile setup
+  if (!user.isProfileComplete) return Routes.profileSetup;
+
+  // All done — go home
+  return Routes.home;
+}
+
 /// App router configuration
 GoRouter createAppRouter(Ref ref) {
   return GoRouter(
@@ -54,17 +72,38 @@ GoRouter createAppRouter(Ref ref) {
     redirect: (context, state) {
       final auth = ref.read(authProvider);
       final isAuth = auth.isAuthenticated;
-      final isAuthRoute = state.matchedLocation == Routes.welcome ||
-          state.matchedLocation == Routes.login ||
-          state.matchedLocation == Routes.register;
+      final currentPath = state.matchedLocation;
+      final isAuthRoute = currentPath == Routes.welcome ||
+          currentPath == Routes.login ||
+          currentPath == Routes.register;
 
-      // If authenticated and on auth page, redirect to home or profile setup
-      if (isAuth && isAuthRoute) {
-        final user = auth.user;
-        if (user != null && !user.isProfileComplete) {
-          return Routes.profileSetup;
+      // Not authenticated — only allow auth routes
+      if (!isAuth) {
+        if (isAuthRoute) return null; // Stay on auth pages
+        return Routes.welcome; // Redirect to welcome
+      }
+
+      // Authenticated — redirect away from auth pages
+      if (isAuthRoute) {
+        return _getAuthenticatedRoute(auth.user);
+      }
+
+      // Authenticated — ensure they're on the right step
+      final user = auth.user;
+      if (user != null) {
+        final correctRoute = _getAuthenticatedRoute(user);
+        final isOnboardingRoute = currentPath == Routes.emailVerify ||
+            currentPath == Routes.phoneVerify ||
+            currentPath == Routes.profileSetup;
+
+        // If they're on an onboarding route but should be somewhere else, redirect
+        if (isOnboardingRoute && currentPath != correctRoute) {
+          // Allow going forward but not backward in onboarding
+          // If correctRoute is home, they're done — let them go
+          if (correctRoute == Routes.home) return Routes.home;
+          // Otherwise redirect to the correct step
+          return correctRoute;
         }
-        return Routes.home;
       }
 
       return null; // No redirect
