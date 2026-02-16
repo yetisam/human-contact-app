@@ -43,13 +43,13 @@ async function sendEmailVerification(userId) {
   await redis.del(attemptsKey); // Reset attempts
   await redis.setex(cooldownKey, COOLDOWN_SECONDS, '1');
 
-  // Send email (or log in dev)
-  if (process.env.NODE_ENV === 'development') {
+  // Send email (or log code until real email service is configured)
+  if (process.env.SENDGRID_API_KEY) {
+    await sendEmail(user.email, code);
+  } else {
     logger.info('========================================');
     logger.info(`EMAIL VERIFICATION CODE for ${user.email}: ${code}`);
     logger.info('========================================');
-  } else {
-    await sendEmail(user.email, code);
   }
 
   // Record verification attempt
@@ -153,13 +153,13 @@ async function sendPhoneVerification(userId, phone) {
   await redis.del(attemptsKey);
   await redis.setex(cooldownKey, COOLDOWN_SECONDS, '1');
 
-  // Send SMS (or log in dev)
-  if (process.env.NODE_ENV === 'development') {
+  // Send SMS (or log code until real SMS service is configured)
+  if (process.env.TWILIO_ACCOUNT_SID) {
+    await sendSMS(phoneNumber, code);
+  } else {
     logger.info('========================================');
     logger.info(`PHONE VERIFICATION CODE for ${phoneNumber}: ${code}`);
     logger.info('========================================');
-  } else {
-    await sendSMS(phoneNumber, code);
   }
 
   // Record verification attempt
