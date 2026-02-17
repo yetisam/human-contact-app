@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="glow1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <!-- Left person silhouette -->
+  <circle cx="72" cy="38" r="14" fill="#3B82F6"/>
+  <path d="M58 56 C58 51 63 48 72 48 C81 48 86 51 86 56 L86 82 C86 85 84 87 81 87 L63 87 C60 87 58 85 58 82 Z" fill="#3B82F6"/>
+  <!-- Right person silhouette -->
+  <circle cx="128" cy="38" r="14" fill="#3B82F6"/>
+  <path d="M114 56 C114 51 119 48 128 48 C137 48 142 51 142 56 L142 82 C142 85 140 87 137 87 L119 87 C116 87 114 85 114 82 Z" fill="#3B82F6"/>
+  <!-- Connection spark between them -->
+  <circle cx="100" cy="60" r="8" fill="#F59E0B" opacity="0.9"/>
+  <circle cx="100" cy="60" r="14" fill="#F59E0B" opacity="0.25"/>
+  <circle cx="100" cy="60" r="20" fill="#F59E0B" opacity="0.1"/>
+  <!-- Reaching arms -->
+  <path d="M84 64 Q92 58 96 60" stroke="#3B82F6" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M116 64 Q108 58 104 60" stroke="#3B82F6" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- Text centered below -->
+  <text x="100" y="130" text-anchor="middle" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF" letter-spacing="-0.5">Human</text>
+  <text x="100" y="162" text-anchor="middle" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="300" fill="#3B82F6" letter-spacing="-0.5">Contact</text>
+</svg>

@@ -25,9 +25,9 @@ class WelcomeScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       SvgPicture.asset(
-                        'assets/images/logo.svg',
-                        width: 200,
-                        height: 180,
+                        'assets/images/logo-stacked.svg',
+                        width: 220,
+                        height: 220,
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(height: HCSpacing.lg),
