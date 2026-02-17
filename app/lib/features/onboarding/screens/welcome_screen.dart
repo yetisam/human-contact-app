@@ -20,27 +20,34 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 const Spacer(flex: 2),
 
-                // Logo area
-                _buildLogo(),
-                const SizedBox(height: HCSpacing.xl),
-
-                // Tagline
-                Text(
-                  'The place to meet\nreal humans.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: HCSpacing.md),
-
-                // Subtitle
-                Text(
-                  'Safe. Verified. Real connections.\nNot another social network.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: HCColors.textSecondary,
-                    height: 1.5,
+                // Logo + tagline — vertically centered together
+                Center(
+                  child: Column(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/images/logo.svg',
+                        width: 200,
+                        height: 180,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: HCSpacing.lg),
+                      Text(
+                        'The place to meet\nreal humans.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: HCSpacing.md),
+                      Text(
+                        'Safe. Verified. Real connections.\nNot another social network.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: HCColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -96,17 +103,6 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLogo() {
-    return SizedBox(
-      height: 100,
-      child: SvgPicture.asset(
-        'assets/images/logo.svg',
-        width: 280,
-        fit: BoxFit.contain,
       ),
     );
   }

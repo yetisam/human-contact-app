@@ -81,10 +81,13 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 
     try {
-      final user = await _authService.login(
+      // Login returns minimal user data (no interests)
+      await _authService.login(
         email: email,
         password: password,
       );
+      // Fetch full profile with interests for accurate isProfileComplete check
+      final user = await _authService.getProfile();
       state = AuthState(status: AuthStatus.authenticated, user: user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
