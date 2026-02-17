@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
-import '../../../config/routes.dart';
-import '../../auth/providers/auth_provider.dart';
 import 'discovery_screen.dart';
 import '../screens/connections_screen.dart';
 import '../screens/profile_tab_screen.dart';
@@ -67,11 +64,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const Spacer(),
+                    // Notifications placeholder
                     IconButton(
-                      icon: const Icon(Icons.logout, color: HCColors.textMuted, size: 20),
-                      onPressed: () async {
-                        await ref.read(authProvider.notifier).logout();
-                        if (context.mounted) context.go(Routes.welcome);
+                      icon: const Icon(Icons.notifications_none, color: HCColors.textMuted, size: 22),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Notifications coming soon!')),
+                        );
                       },
                     ),
                   ],
