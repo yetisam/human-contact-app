@@ -268,67 +268,83 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildHeader(ChatParticipant? other, ChatConnectionInfo? info) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: HCColors.border, width: 0.5)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-          ),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: HCColors.primary.withValues(alpha: 0.2),
-            child: Text(
-              other?.firstName[0].toUpperCase() ?? '?',
-              style: const TextStyle(color: HCColors.primary, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  other?.firstName ?? 'Chat',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (info?.timeRemaining != null && !info!.isExpired)
-                  Text(
-                    _formatTimeRemaining(info.timeRemaining!),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: info.timeRemaining!.inHours < 6 ? HCColors.error : HCColors.textMuted,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // Exchange contact button — prominent
-          _buildExchangeHeaderButton(),
-          const SizedBox(width: 6),
-          // Messages remaining badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _myRemaining > 3
-                  ? HCColors.primary.withValues(alpha: 0.2)
-                  : HCColors.error.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$_myRemaining left',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _myRemaining > 3 ? HCColors.primary : HCColors.error,
+    return Column(
+      children: [
+        // Main header — clean: back, avatar, name, exchange button
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.pop(),
               ),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: HCColors.primary.withValues(alpha: 0.2),
+                child: Text(
+                  other?.firstName[0].toUpperCase() ?? '?',
+                  style: const TextStyle(color: HCColors.primary, fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  other?.firstName ?? 'Chat',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              _buildExchangeHeaderButton(),
+            ],
+          ),
+        ),
+        // Info bar — timer and messages remaining
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: HCSpacing.lg, vertical: 6),
+          decoration: BoxDecoration(
+            color: HCColors.bgCard,
+            border: Border(
+              bottom: BorderSide(color: HCColors.border.withValues(alpha: 0.3), width: 0.5),
             ),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              // Time remaining
+              if (info?.timeRemaining != null && !info!.isExpired) ...[
+                Icon(
+                  Icons.timer_outlined,
+                  size: 14,
+                  color: info.timeRemaining!.inHours < 6 ? HCColors.error : HCColors.textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _formatTimeRemaining(info.timeRemaining!),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: info.timeRemaining!.inHours < 6 ? HCColors.error : HCColors.textMuted,
+                  ),
+                ),
+              ],
+              const Spacer(),
+              // Messages remaining
+              Icon(
+                Icons.chat_bubble_outline,
+                size: 14,
+                color: _myRemaining > 3 ? HCColors.textMuted : HCColors.error,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$_myRemaining messages left',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _myRemaining > 3 ? HCColors.textMuted : HCColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

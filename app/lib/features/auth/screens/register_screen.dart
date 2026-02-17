@@ -24,6 +24,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   bool _agreedToTerms = false;
+  double _passwordStrength = 0;
+
+  void _updatePasswordStrength(String password) {
+    double strength = 0;
+    if (password.length >= 8) strength += 0.25;
+    if (password.length >= 12) strength += 0.15;
+    if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
+    if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
+    if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength += 0.2;
+    setState(() => _passwordStrength = strength.clamp(0.0, 1.0));
+  }
 
   @override
   void dispose() {
@@ -143,6 +154,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     obscureText: _obscurePassword,
                     prefixIcon: Icons.lock_outline,
                     textInputAction: TextInputAction.next,
+                    onChanged: _updatePasswordStrength,
                     suffix: GestureDetector(
                       onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                       child: Icon(
@@ -157,6 +169,44 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       return null;
                     },
                   ),
+                  if (_passwordController.text.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: _passwordStrength,
+                              backgroundColor: HCColors.bgInput,
+                              color: _passwordStrength < 0.4
+                                  ? HCColors.error
+                                  : _passwordStrength < 0.7
+                                      ? HCColors.accent
+                                      : HCColors.success,
+                              minHeight: 4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _passwordStrength < 0.4
+                              ? 'Weak'
+                              : _passwordStrength < 0.7
+                                  ? 'Fair'
+                                  : 'Strong',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _passwordStrength < 0.4
+                                ? HCColors.error
+                                : _passwordStrength < 0.7
+                                    ? HCColors.accent
+                                    : HCColors.success,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: HCSpacing.md),
 
                   HCTextField(

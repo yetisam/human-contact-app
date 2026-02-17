@@ -7,6 +7,7 @@ import '../../auth/providers/auth_provider.dart';
 import 'discovery_screen.dart';
 import '../screens/connections_screen.dart';
 import '../screens/profile_tab_screen.dart';
+import '../services/discovery_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,12 +18,30 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
+  int _pendingRequestCount = 0;
 
   final _screens = const [
     DiscoveryScreen(),
     ConnectionsScreen(),
     ProfileTabScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPendingCount();
+  }
+
+  Future<void> _loadPendingCount() async {
+    try {
+      final service = ref.read(discoveryServiceProvider);
+      final result = await service.getConnections(type: 'received', status: 'PENDING');
+      final connections = result['connections'] as List;
+      if (mounted) {
+        setState(() => _pendingRequestCount = connections.length);
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,21 +86,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        onDestinationSelected: (i) {
+          setState(() => _currentIndex = i);
+          if (i == 1) _loadPendingCount(); // Refresh count when switching to connections
+        },
         backgroundColor: HCColors.bgDark,
         indicatorColor: HCColors.primary.withValues(alpha: 0.2),
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.explore_outlined),
             selectedIcon: Icon(Icons.explore, color: HCColors.primary),
             label: 'Discover',
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people, color: HCColors.primary),
+            icon: Badge(
+              isLabelVisible: _pendingRequestCount > 0,
+              label: Text('$_pendingRequestCount'),
+              child: const Icon(Icons.people_outline),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: _pendingRequestCount > 0,
+              label: Text('$_pendingRequestCount'),
+              child: const Icon(Icons.people, color: HCColors.primary),
+            ),
             label: 'Connections',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person, color: HCColors.primary),
             label: 'Profile',
