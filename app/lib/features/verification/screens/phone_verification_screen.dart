@@ -9,6 +9,7 @@ import '../../../widgets/hc_text_field.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../services/verification_service.dart';
 import '../widgets/otp_input.dart';
+import '../../../widgets/hc_step_indicator.dart';
 
 class PhoneVerificationScreen extends ConsumerStatefulWidget {
   const PhoneVerificationScreen({super.key});
@@ -116,12 +117,8 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => context.pop(),
-                  padding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: HCSpacing.xl),
+                const HCStepIndicator(currentStep: 1),
+                const SizedBox(height: HCSpacing.lg),
 
                 const Icon(Icons.phone_android, color: HCColors.primary, size: 48),
                 const SizedBox(height: HCSpacing.lg),

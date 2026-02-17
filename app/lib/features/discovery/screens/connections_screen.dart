@@ -5,6 +5,7 @@ import '../../../config/theme.dart';
 import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_card.dart';
 import '../services/discovery_service.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class ConnectionsScreen extends ConsumerStatefulWidget {
   const ConnectionsScreen({super.key});
@@ -274,10 +275,11 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
         itemCount: _active.length,
         itemBuilder: (context, index) {
           final conn = _active[index];
-          // Figure out who the other person is
+          final myId = ref.read(authProvider).user?.id;
           final requester = conn['requester'];
           final recipient = conn['recipient'];
-          // TODO: compare with current user ID to determine other person
+          final otherPerson = requester['id'] == myId ? recipient : requester;
+          final otherName = otherPerson['firstName'] as String;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: HCSpacing.md),
@@ -288,22 +290,25 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
                 child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 20,
-                      backgroundColor: HCColors.success.withValues(alpha: 0.2),
-                      child: const Icon(Icons.chat_bubble, color: HCColors.success, size: 20),
+                      radius: 22,
+                      backgroundColor: HCColors.primary.withValues(alpha: 0.2),
+                      child: Text(
+                        otherName[0].toUpperCase(),
+                        style: const TextStyle(color: HCColors.primary, fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
                     ),
-                    const SizedBox(width: HCSpacing.sm),
+                    const SizedBox(width: HCSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${requester['firstName']} ↔ ${recipient['firstName']}',
+                            otherName,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           if (conn['chatExpiresAt'] != null)
                             Text(
-                              'Chat expires: ${_formatExpiry(conn['chatExpiresAt'])}',
+                              _formatExpiry(conn['chatExpiresAt']),
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: HCColors.accent,
                               ),
@@ -311,7 +316,9 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, color: HCColors.primary, size: 16),
+                    const Icon(Icons.chat_bubble_outline, color: HCColors.primary, size: 20),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_ios, color: HCColors.textMuted, size: 14),
                   ],
                 ),
               ),
@@ -334,8 +341,11 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
         itemCount: _graduated.length,
         itemBuilder: (context, index) {
           final conn = _graduated[index];
+          final myId = ref.read(authProvider).user?.id;
           final requester = conn['requester'];
           final recipient = conn['recipient'];
+          final otherPerson = requester['id'] == myId ? recipient : requester;
+          final otherName = otherPerson['firstName'] as String;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: HCSpacing.md),
@@ -343,17 +353,20 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 20,
+                    radius: 22,
                     backgroundColor: Colors.green.withValues(alpha: 0.2),
-                    child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    child: Text(
+                      otherName[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
                   ),
-                  const SizedBox(width: HCSpacing.sm),
+                  const SizedBox(width: HCSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${requester['firstName']} ↔ ${recipient['firstName']}',
+                          otherName,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
@@ -365,7 +378,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
                       ],
                     ),
                   ),
-                  const Icon(Icons.people, color: Colors.green, size: 20),
+                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
                 ],
               ),
             ),

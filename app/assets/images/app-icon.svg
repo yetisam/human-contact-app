@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- App Icon 1: Two stylized people forming a connection, on dark rounded square -->
+  <defs>
+    <linearGradient id="icon1-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A0E27"/>
+      <stop offset="100%" stop-color="#111738"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect x="4" y="4" width="192" height="192" rx="40" ry="40" fill="url(#icon1-bg)"/>
+  <rect x="4" y="4" width="192" height="192" rx="40" ry="40" fill="none" stroke="#1E2A5E" stroke-width="1"/>
+  <!-- Left person -->
+  <circle cx="72" cy="62" r="16" fill="#3B82F6"/>
+  <path d="M54 84 C54 76 62 72 72 72 C82 72 90 76 90 84 L90 110 C90 114 86 118 82 118 L62 118 C58 118 54 114 54 110 Z" fill="#3B82F6"/>
+  <!-- Right person -->
+  <circle cx="128" cy="62" r="16" fill="#3B82F6"/>
+  <path d="M110 84 C110 76 118 72 128 72 C138 72 146 76 146 84 L146 110 C146 114 142 118 138 118 L118 118 C114 118 110 114 110 110 Z" fill="#3B82F6"/>
+  <!-- Connection spark between them -->
+  <circle cx="100" cy="88" r="10" fill="#F59E0B"/>
+  <circle cx="100" cy="88" r="16" fill="#F59E0B" opacity="0.25"/>
+  <circle cx="100" cy="88" r="22" fill="#F59E0B" opacity="0.08"/>
+  <!-- Arms reaching toward center -->
+  <path d="M86 92 Q93 86 96 88" stroke="#3B82F6" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M114 92 Q107 86 104 88" stroke="#3B82F6" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- Subtle tagline hint at bottom -->
+  <text x="100" y="155" font-family="'Inter', Arial, sans-serif" font-size="12" fill="#FFFFFF" opacity="0.5" text-anchor="middle" letter-spacing="3">HUMAN CONTACT</text>
+</svg>

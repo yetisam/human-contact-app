@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../config/routes.dart';
@@ -70,11 +71,27 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: HCSpacing.md),
                 HCOutlineButton(
-                  label: 'I already have an account',
+                  label: 'Sign In',
                   onPressed: () => context.push(Routes.login),
                 ),
 
-                const SizedBox(height: HCSpacing.xl),
+                const SizedBox(height: HCSpacing.md),
+
+                // Beta badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: HCColors.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(HCRadius.xl),
+                    border: Border.all(color: HCColors.accent.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text(
+                    'BETA v1.0',
+                    style: TextStyle(color: HCColors.accent, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1),
+                  ),
+                ),
+
+                const SizedBox(height: HCSpacing.lg),
               ],
             ),
           ),
@@ -86,30 +103,10 @@ class WelcomeScreen extends StatelessWidget {
   Widget _buildLogo() {
     return SizedBox(
       height: 100,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Left figure (blue)
-          Icon(
-            Icons.person,
-            size: 64,
-            color: HCColors.primary,
-          ),
-          const SizedBox(width: 4),
-          // Handshake
-          Icon(
-            Icons.handshake,
-            size: 32,
-            color: HCColors.textMuted,
-          ),
-          const SizedBox(width: 4),
-          // Right figure (orange)
-          Icon(
-            Icons.person,
-            size: 64,
-            color: HCColors.accent,
-          ),
-        ],
+      child: SvgPicture.asset(
+        'assets/images/logo.svg',
+        width: 280,
+        fit: BoxFit.contain,
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_text_field.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../services/profile_service.dart';
+import '../../../widgets/hc_step_indicator.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -140,9 +141,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Progress indicator
+              // Onboarding step indicator
+              const HCStepIndicator(currentStep: 2),
+
+              // Profile sub-step indicator
               Padding(
-                padding: const EdgeInsets.all(HCSpacing.lg),
+                padding: const EdgeInsets.symmetric(horizontal: HCSpacing.lg),
                 child: Row(
                   children: [
                     _buildProgressDot(0),

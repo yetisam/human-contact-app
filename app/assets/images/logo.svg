@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <!-- Logo 1: Two human silhouettes leaning toward each other, connected by a warm glow -->
+  <defs>
+    <linearGradient id="glow1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <!-- Left person silhouette -->
+  <circle cx="30" cy="28" r="10" fill="#3B82F6"/>
+  <path d="M20 42 C20 38 25 36 30 36 C35 36 40 38 40 42 L40 62 C40 64 38 66 36 66 L24 66 C22 66 20 64 20 62 Z" fill="#3B82F6"/>
+  <!-- Right person silhouette -->
+  <circle cx="70" cy="28" r="10" fill="#3B82F6"/>
+  <path d="M60 42 C60 38 65 36 70 36 C75 36 80 38 80 42 L80 62 C80 64 78 66 76 66 L64 66 C62 66 60 64 60 62 Z" fill="#3B82F6"/>
+  <!-- Connection spark between them -->
+  <circle cx="50" cy="45" r="6" fill="#F59E0B" opacity="0.9"/>
+  <circle cx="50" cy="45" r="10" fill="#F59E0B" opacity="0.25"/>
+  <circle cx="50" cy="45" r="14" fill="#F59E0B" opacity="0.1"/>
+  <!-- Reaching arms -->
+  <path d="M38 48 Q44 44 46 45" stroke="#3B82F6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M62 48 Q56 44 54 45" stroke="#3B82F6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="105" y="42" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#FFFFFF" letter-spacing="-0.5">Human</text>
+  <text x="105" y="70" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="300" fill="#3B82F6" letter-spacing="-0.5">Contact</text>
+</svg>

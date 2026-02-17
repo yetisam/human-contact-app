@@ -8,6 +8,7 @@ import '../../../widgets/hc_button.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../services/verification_service.dart';
 import '../widgets/otp_input.dart';
+import '../../../widgets/hc_step_indicator.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   const EmailVerificationScreen({super.key});
@@ -106,12 +107,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => context.pop(),
-                  padding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: HCSpacing.xl),
+                const HCStepIndicator(currentStep: 0),
+                const SizedBox(height: HCSpacing.lg),
 
                 const Icon(Icons.email_outlined, color: HCColors.primary, size: 48),
                 const SizedBox(height: HCSpacing.lg),
