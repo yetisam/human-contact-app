@@ -24,11 +24,41 @@ class WelcomeScreen extends StatelessWidget {
                 Center(
                   child: Column(
                     children: [
-                      SvgPicture.asset(
-                        'assets/images/logo-stacked.svg',
-                        width: 220,
-                        height: 220,
-                        fit: BoxFit.contain,
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: HCColors.primary.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: HCColors.primary.withValues(alpha: 0.15),
+                              blurRadius: 30,
+                              spreadRadius: 2,
+                            ),
+                            BoxShadow(
+                              color: HCColors.accent.withValues(alpha: 0.08),
+                              blurRadius: 60,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              HCColors.bgCard.withValues(alpha: 0.8),
+                              HCColors.bgDark.withValues(alpha: 0.9),
+                            ],
+                          ),
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/images/logo-stacked.svg',
+                          width: 260,
+                          height: 260,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       const SizedBox(height: HCSpacing.lg),
                       Text(
