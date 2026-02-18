@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_card.dart';
+import '../../../widgets/hc_shimmer.dart';
 import '../services/discovery_service.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -113,7 +114,14 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
         ),
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? ListView.builder(
+                  padding: const EdgeInsets.all(HCSpacing.md),
+                  itemCount: 4,
+                  itemBuilder: (context, index) => Padding(
+                    padding: const EdgeInsets.only(bottom: HCSpacing.md),
+                    child: HCShimmerElements.connectionItem(),
+                  ),
+                )
               : TabBarView(
                   controller: _tabController,
                   children: [

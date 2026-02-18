@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
+import '../../../widgets/hc_card.dart';
 import '../../../core/websocket/ws_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/chat_message.dart';
@@ -33,6 +34,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   StreamSubscription? _wsSub;
   String? _myUserId;
   bool _showScrollToBottomFab = false;
+  final Set<String> _visibleTimestamps = {};
 
   @override
   void initState() {
@@ -302,8 +304,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
 
-              // Input bar
-              _buildInputBar(canSend),
+              // Input bar or zero messages CTA
+              _myRemaining == 0 ? _buildZeroMessagesCTA() : _buildInputBar(canSend),
             ],
           ),
         ),
@@ -583,31 +585,136 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildBubble(ChatMessage msg, bool isMe) {
+    final showThisTimestamp = _visibleTimestamps.contains(msg.id);
+    
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe
-              ? HCColors.primary
-              : HCColors.bgCard,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                if (showThisTimestamp) {
+                  _visibleTimestamps.remove(msg.id);
+                } else {
+                  _visibleTimestamps.add(msg.id);
+                }
+              });
+            },
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isMe
+                    ? HCColors.primary
+                    : HCColors.bgCard,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isMe ? 16 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 16),
+                ),
+              ),
+              child: Text(
+                msg.content,
+                style: TextStyle(
+                  color: isMe ? Colors.white : HCColors.textPrimary,
+                  fontSize: 15,
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          msg.content,
-          style: TextStyle(
-            color: isMe ? Colors.white : HCColors.textPrimary,
-            fontSize: 15,
-          ),
+          // Show timestamp when tapped
+          if (showThisTimestamp)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 4),
+              child: Text(
+                _formatDetailedTimestamp(msg.createdAt),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: HCColors.textMuted,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildZeroMessagesCTA() {
+    return Padding(
+      padding: const EdgeInsets.all(HCSpacing.md),
+      child: HCCard(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: HCColors.accent.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.message,
+                    color: HCColors.accent,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: HCSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "You've used all your messages!",
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: HCColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Exchange contacts to keep talking.",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: HCColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: HCSpacing.md),
+            Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [HCColors.accent, Color(0xFFE88B00)],
+                ),
+                borderRadius: BorderRadius.circular(HCRadius.md),
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => context.push('/exchange/${widget.connectionId}'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(HCRadius.md),
+                  ),
+                ),
+                icon: const Icon(Icons.swap_horiz, color: Colors.white),
+                label: const Text(
+                  'Exchange Contacts',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -684,5 +791,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
     if (diff.inDays == 1) return 'Yesterday';
     return '${dt.day}/${dt.month}';
+  }
+
+  String _formatDetailedTimestamp(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+
+    final time = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+    if (diff.inDays == 0) {
+      return time;
+    } else if (diff.inDays == 1) {
+      return 'Yesterday $time';
+    } else {
+      return '${dt.day}/${dt.month} $time';
+    }
   }
 }

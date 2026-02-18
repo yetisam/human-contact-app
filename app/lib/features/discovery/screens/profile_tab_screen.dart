@@ -94,16 +94,33 @@ class ProfileTabScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: HCSpacing.md),
-                // Edit profile button
-                OutlinedButton.icon(
-                  onPressed: () => context.push(Routes.profileSetup),
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: const Text('Edit Profile'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HCColors.primary,
-                    side: const BorderSide(color: HCColors.border),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  ),
+                // Action buttons row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => context.push(Routes.profileSetup),
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text('Edit Profile'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: HCColors.primary,
+                        side: const BorderSide(color: HCColors.border),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(width: HCSpacing.sm),
+                    IconButton(
+                      onPressed: () => context.push(Routes.settings),
+                      icon: const Icon(Icons.settings),
+                      color: HCColors.textMuted,
+                      tooltip: 'Settings',
+                      style: IconButton.styleFrom(
+                        backgroundColor: HCColors.bgCard,
+                        side: const BorderSide(color: HCColors.border),
+                        padding: const EdgeInsets.all(8),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

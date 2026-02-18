@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/hc_button.dart';
 import '../../../widgets/hc_card.dart';
+import '../../../widgets/hc_shimmer.dart';
 import '../models/match_suggestion.dart';
 import '../services/discovery_service.dart';
 
@@ -146,7 +147,14 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView.builder(
+        padding: const EdgeInsets.all(HCSpacing.md),
+        itemCount: 3,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: HCSpacing.md),
+          child: HCShimmerElements.matchCard(),
+        ),
+      );
     }
 
     if (_error != null) {

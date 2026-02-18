@@ -215,6 +215,21 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             maxLines: 3,
             maxLength: 200,
             validator: (v) => (v == null || v.length < 50) ? 'At least 50 characters' : null,
+            onChanged: (value) => setState(() {}), // Trigger rebuild for character count
+          ),
+          // Character count
+          Padding(
+            padding: const EdgeInsets.only(left: HCSpacing.sm, top: 4),
+            child: Text(
+              '${_purposeController.text.length}/200 characters',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: _purposeController.text.length < 50 
+                    ? HCColors.error 
+                    : _purposeController.text.length >= 200 
+                        ? HCColors.accent 
+                        : HCColors.textMuted,
+              ),
+            ),
           ),
           const SizedBox(height: HCSpacing.md),
 
@@ -288,11 +303,34 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: HCColors.textSecondary),
               ),
               const SizedBox(height: HCSpacing.sm),
-              Text(
-                '${_selectedInterestIds.length} selected',
-                style: TextStyle(
-                  color: _selectedInterestIds.length >= 3 ? HCColors.success : HCColors.accent,
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: (_selectedInterestIds.length < 3 
+                      ? HCColors.error 
+                      : _selectedInterestIds.length >= 3 && _selectedInterestIds.length <= 10 
+                          ? HCColors.success 
+                          : HCColors.accent).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: (_selectedInterestIds.length < 3 
+                        ? HCColors.error 
+                        : _selectedInterestIds.length >= 3 && _selectedInterestIds.length <= 10 
+                            ? HCColors.success 
+                            : HCColors.accent).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  '${_selectedInterestIds.length} of 3-10 selected',
+                  style: TextStyle(
+                    color: _selectedInterestIds.length < 3 
+                        ? HCColors.error 
+                        : _selectedInterestIds.length >= 3 && _selectedInterestIds.length <= 10 
+                            ? HCColors.success 
+                            : HCColors.accent,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],

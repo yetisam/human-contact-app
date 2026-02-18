@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/onboarding/screens/welcome_screen.dart';
@@ -7,6 +8,7 @@ import '../features/profile/screens/profile_setup_screen.dart';
 import '../features/discovery/screens/home_screen.dart';
 import '../features/verification/screens/email_verification_screen.dart';
 import '../features/verification/screens/phone_verification_screen.dart';
+import '../features/settings/screens/settings_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/chat/screens/chat_screen.dart';
 import '../features/exchange/screens/exchange_screen.dart';
@@ -111,47 +113,124 @@ GoRouter createAppRouter(Ref ref) {
     routes: [
       GoRoute(
         path: Routes.welcome,
-        builder: (context, state) => const WelcomeScreen(),
+        pageBuilder: (context, state) => _buildFadePage(
+          key: state.pageKey,
+          child: const WelcomeScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.register,
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => _buildSlidePage(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.login,
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => _buildSlidePage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.emailVerify,
-        builder: (context, state) => const EmailVerificationScreen(),
+        pageBuilder: (context, state) => _buildSlidePage(
+          key: state.pageKey,
+          child: const EmailVerificationScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.phoneVerify,
-        builder: (context, state) => const PhoneVerificationScreen(),
+        pageBuilder: (context, state) => _buildSlidePage(
+          key: state.pageKey,
+          child: const PhoneVerificationScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.profileSetup,
-        builder: (context, state) => const ProfileSetupScreen(),
+        pageBuilder: (context, state) => _buildSlidePage(
+          key: state.pageKey,
+          child: const ProfileSetupScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.home,
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => _buildFadePage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.chatDetail,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final connectionId = state.pathParameters['connectionId']!;
-          return ChatScreen(connectionId: connectionId);
+          return _buildSlidePage(
+            key: state.pageKey,
+            child: ChatScreen(connectionId: connectionId),
+          );
         },
       ),
       GoRoute(
         path: Routes.exchange,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final connectionId = state.pathParameters['connectionId']!;
-          return ExchangeScreen(connectionId: connectionId);
+          return _buildSlidePage(
+            key: state.pageKey,
+            child: ExchangeScreen(connectionId: connectionId),
+          );
         },
       ),
+      GoRoute(
+        path: Routes.settings,
+        pageBuilder: (context, state) => _buildSlidePage(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+        ),
+      ),
     ],
+  );
+}
+
+/// Page transition builders
+Page<void> _buildSlidePage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(1.0, 0.0);
+      const end = Offset.zero;
+      const curve = Curves.easeInOut;
+
+      var tween = Tween(begin: begin, end: end).chain(
+        CurveTween(curve: curve),
+      );
+
+      return SlideTransition(
+        position: animation.drive(tween),
+        child: child,
+      );
+    },
+  );
+}
+
+Page<void> _buildFadePage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
+        child: child,
+      );
+    },
   );
 }
 
