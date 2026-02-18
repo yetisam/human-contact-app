@@ -165,6 +165,15 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
                     },
                     onChanged: (code) => _code = code,
                   ),
+                  const SizedBox(height: HCSpacing.sm),
+                  Text(
+                    'Standard SMS rates may apply',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: HCColors.textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                   const SizedBox(height: HCSpacing.xl),
 
                   HCButton(

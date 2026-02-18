@@ -171,11 +171,21 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.search_off, color: HCColors.textMuted, size: 64),
+              Container(
+                padding: const EdgeInsets.all(HCSpacing.lg),
+                decoration: BoxDecoration(
+                  color: HCColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(HCRadius.full),
+                ),
+                child: const Icon(Icons.person_search, color: HCColors.primary, size: 48),
+              ),
               const SizedBox(height: HCSpacing.lg),
               Text(
-                'No matches yet',
-                style: Theme.of(context).textTheme.titleLarge,
+                'No matches yet — complete your profile for better results',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: HCColors.textPrimary,
+                ),
               ),
               const SizedBox(height: HCSpacing.sm),
               Text(
@@ -186,6 +196,17 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                 ),
               ),
               const SizedBox(height: HCSpacing.lg),
+              HCButton(
+                label: 'Complete Profile',
+                icon: Icons.person,
+                onPressed: () {
+                  // Navigate to profile completion
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile completion coming soon!')),
+                  );
+                },
+              ),
+              const SizedBox(height: HCSpacing.md),
               HCOutlineButton(label: 'Refresh', onPressed: _loadSuggestions),
             ],
           ),
@@ -278,12 +299,57 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
             const SizedBox(height: HCSpacing.md),
 
-            // Shared interests
+            // Match quality indicators
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                // Shared interests badge
+                if (match.sharedCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: HCColors.success.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: HCColors.success.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '${match.sharedCount} shared interests',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: HCColors.success,
+                      ),
+                    ),
+                  ),
+                
+                // Same city badge
+                if (match.city != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: HCColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: HCColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: const Text(
+                      'Same city',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: HCColors.primary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
             if (match.sharedInterests.isNotEmpty) ...[
+              const SizedBox(height: HCSpacing.md),
               Text(
-                '${match.sharedCount} shared interests',
+                'Shared interests:',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: HCColors.primary,
+                  color: HCColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 6),

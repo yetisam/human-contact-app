@@ -143,6 +143,16 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   onChanged: (code) => _code = code,
                 ),
 
+                const SizedBox(height: HCSpacing.sm),
+                Text(
+                  'Check your spam folder',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: HCColors.textMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+
                 const SizedBox(height: HCSpacing.xl),
 
                 HCButton(

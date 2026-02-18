@@ -128,16 +128,37 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
     );
   }
 
-  Widget _buildEmptyState(String message) {
+  Widget _buildEmptyState(String title, String message, IconData icon, Color iconColor) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(HCSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inbox_outlined, color: HCColors.textMuted, size: 48),
-            const SizedBox(height: HCSpacing.md),
-            Text(message, style: TextStyle(color: HCColors.textSecondary)),
+            Container(
+              padding: const EdgeInsets.all(HCSpacing.lg),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(HCRadius.full),
+              ),
+              child: Icon(icon, color: iconColor, size: 48),
+            ),
+            const SizedBox(height: HCSpacing.lg),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HCColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: HCSpacing.sm),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: HCColors.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
@@ -145,7 +166,14 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
   }
 
   Widget _buildReceivedList() {
-    if (_received.isEmpty) return _buildEmptyState('No pending requests');
+    if (_received.isEmpty) {
+      return _buildEmptyState(
+        'No pending requests yet',
+        'Keep discovering!',
+        Icons.inbox,
+        HCColors.primary,
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: _loadConnections,
@@ -222,7 +250,14 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
   }
 
   Widget _buildSentList() {
-    if (_sent.isEmpty) return _buildEmptyState('No pending sent requests');
+    if (_sent.isEmpty) {
+      return _buildEmptyState(
+        'You haven\'t sent any requests yet',
+        'Start connecting!',
+        Icons.send,
+        HCColors.accent,
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: _loadConnections,
@@ -266,7 +301,14 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
   }
 
   Widget _buildActiveList() {
-    if (_active.isEmpty) return _buildEmptyState('No active connections yet');
+    if (_active.isEmpty) {
+      return _buildEmptyState(
+        'No active chats',
+        'Send a connection request to start talking!',
+        Icons.chat_bubble_outline,
+        HCColors.primary,
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: _loadConnections,
@@ -331,7 +373,12 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
 
   Widget _buildGraduatedList() {
     if (_graduated.isEmpty) {
-      return _buildEmptyState('No exchanged contacts yet');
+      return _buildEmptyState(
+        'No exchanged contacts yet',
+        'Your first one is just a conversation away!',
+        Icons.contacts,
+        HCColors.success,
+      );
     }
 
     return RefreshIndicator(

@@ -32,12 +32,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Timer? _typingTimer;
   StreamSubscription? _wsSub;
   String? _myUserId;
+  bool _showScrollToBottomFab = false;
 
   @override
   void initState() {
     super.initState();
     _loadChat();
     _connectWebSocket();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    
+    final isAtBottom = _scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - 100;
+    
+    if (_showScrollToBottomFab && isAtBottom) {
+      setState(() => _showScrollToBottomFab = false);
+    } else if (!_showScrollToBottomFab && !isAtBottom && _messages.isNotEmpty) {
+      setState(() => _showScrollToBottomFab = true);
+    }
   }
 
   @override
@@ -236,9 +251,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
               // Messages
               Expanded(
-                child: _messages.isEmpty
-                    ? _buildEmptyChat(otherPerson)
-                    : _buildMessageList(),
+                child: Stack(
+                  children: [
+                    _messages.isEmpty
+                        ? _buildEmptyChat(otherPerson)
+                        : _buildMessageList(),
+                    
+                    // Scroll to bottom FAB
+                    if (_showScrollToBottomFab)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: AnimatedOpacity(
+                          opacity: _showScrollToBottomFab ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: FloatingActionButton.small(
+                            onPressed: () {
+                              _scrollController.animateTo(
+                                _scrollController.position.maxScrollExtent,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                              );
+                            },
+                            backgroundColor: HCColors.primary,
+                            child: const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
 
               // Typing indicator
@@ -477,15 +521,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.chat_bubble_outline, color: HCColors.textMuted, size: 48),
-            const SizedBox(height: HCSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(HCSpacing.lg),
+              decoration: BoxDecoration(
+                color: HCColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(HCRadius.full),
+              ),
+              child: const Icon(Icons.waving_hand, color: HCColors.primary, size: 48),
+            ),
+            const SizedBox(height: HCSpacing.lg),
             Text(
-              'Say hello to ${other?.firstName ?? 'your match'}!',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Say hello! You have 10 messages and 48 hours to connect.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HCColors.textPrimary,
+              ),
             ),
             const SizedBox(height: HCSpacing.sm),
             Text(
-              'You have 10 messages and 48 hours.\nMake them count!',
+              'Make each message count!',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: HCColors.textSecondary,

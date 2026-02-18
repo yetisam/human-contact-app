@@ -236,13 +236,39 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Explainer info card
+        HCCard(
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: HCColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.info_outline, color: HCColors.primary, size: 20),
+              ),
+              const SizedBox(width: HCSpacing.md),
+              Expanded(
+                child: Text(
+                  'Exchange lets you share real contact info securely. Both sides choose what to share and both must approve.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: HCColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: HCSpacing.xl),
+
         const Icon(Icons.swap_horiz, color: HCColors.primary, size: 48),
         const SizedBox(height: HCSpacing.lg),
         Text('Exchange contact info', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: HCSpacing.sm),
         Text(
-          'Choose what you\'d like to share and what you\'d like to receive. '
-          'Both sides must approve before anything is revealed.',
+          'Choose what you\'d like to share and what you\'d like to receive.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HCColors.textSecondary),
         ),
         const SizedBox(height: HCSpacing.xl),
