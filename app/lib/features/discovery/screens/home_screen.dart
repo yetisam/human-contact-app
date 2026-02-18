@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme.dart';
+import '../../../widgets/hc_offline_banner.dart';
 import 'discovery_screen.dart';
 import '../screens/connections_screen.dart';
 import '../screens/profile_tab_screen.dart';
@@ -16,6 +17,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
   int _pendingRequestCount = 0;
+  final ValueNotifier<bool> _isOnline = ValueNotifier<bool>(true);
 
   final _screens = const [
     DiscoveryScreen(),
@@ -36,8 +38,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final connections = result['connections'] as List;
       if (mounted) {
         setState(() => _pendingRequestCount = connections.length);
+        _isOnline.value = true;
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        _isOnline.value = false;
+      }
+    }
   }
 
   @override
@@ -75,6 +82,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
+              ),
+
+              // Offline banner
+              HCOfflineBanner(
+                isOnline: _isOnline,
+                onRetry: () {
+                  // Simulate retry - in real app this would check connectivity
+                  _isOnline.value = true;
+                  _loadPendingCount();
+                },
               ),
 
               // Current screen

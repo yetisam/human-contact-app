@@ -23,6 +23,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
   List<dynamic> _active = [];
   List<dynamic> _graduated = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -38,7 +39,10 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
   }
 
   Future<void> _loadConnections() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final service = ref.read(discoveryServiceProvider);
 
@@ -59,7 +63,12 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -122,15 +131,47 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
                     child: HCShimmerElements.connectionItem(),
                   ),
                 )
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildReceivedList(),
-                    _buildSentList(),
-                    _buildActiveList(),
-                    _buildGraduatedList(),
-                  ],
-                ),
+              : _error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(HCSpacing.xl),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline, color: HCColors.error, size: 48),
+                            const SizedBox(height: HCSpacing.md),
+                            Text(
+                              'Something went wrong',
+                              style: Theme.of(context).textTheme.titleMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: HCSpacing.sm),
+                            Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: HCColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: HCSpacing.md),
+                            HCButton(
+                              label: 'Retry',
+                              icon: Icons.refresh,
+                              onPressed: _loadConnections,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildReceivedList(),
+                        _buildSentList(),
+                        _buildActiveList(),
+                        _buildGraduatedList(),
+                      ],
+                    ),
         ),
       ],
     );

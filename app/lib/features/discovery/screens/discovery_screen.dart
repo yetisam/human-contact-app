@@ -6,6 +6,7 @@ import '../../../widgets/hc_card.dart';
 import '../../../widgets/hc_shimmer.dart';
 import '../models/match_suggestion.dart';
 import '../services/discovery_service.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class DiscoveryScreen extends ConsumerStatefulWidget {
   const DiscoveryScreen({super.key});
@@ -14,8 +15,12 @@ class DiscoveryScreen extends ConsumerStatefulWidget {
   ConsumerState<DiscoveryScreen> createState() => _DiscoveryScreenState();
 }
 
+enum FilterType { all, highMatch, nearby }
+
 class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   List<MatchSuggestion> _matches = [];
+  List<MatchSuggestion> _filteredMatches = [];
+  FilterType _selectedFilter = FilterType.all;
   bool _loading = true;
   String? _error;
 
@@ -38,6 +43,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           _matches = response.matches;
           _loading = false;
         });
+        _applyFilter();
       }
     } catch (e) {
       if (mounted) {
@@ -47,6 +53,32 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         });
       }
     }
+  }
+
+  void _applyFilter() {
+    final user = ref.read(authProvider).user;
+    final userCity = user?.city;
+    
+    switch (_selectedFilter) {
+      case FilterType.all:
+        _filteredMatches = _matches;
+        break;
+      case FilterType.highMatch:
+        _filteredMatches = _matches.where((match) => match.scorePercent >= 70).toList();
+        break;
+      case FilterType.nearby:
+        _filteredMatches = _matches.where((match) => 
+          match.city != null && userCity != null && match.city == userCity
+        ).toList();
+        break;
+    }
+  }
+
+  void _onFilterChanged(FilterType filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+    _applyFilter();
   }
 
   void _showConnectDialog(MatchSuggestion match) {
@@ -127,9 +159,10 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         introMessage: message,
       );
       if (mounted) {
-        // Remove from list
+        // Remove from both lists
         setState(() {
           _matches.removeWhere((m) => m.id == match.id);
+          _filteredMatches.removeWhere((m) => m.id == match.id);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Request sent to ${match.firstName}! 🤝')),
@@ -147,88 +180,236 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return ListView.builder(
-        padding: const EdgeInsets.all(HCSpacing.md),
-        itemCount: 3,
-        itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: HCSpacing.md),
-          child: HCShimmerElements.matchCard(),
-        ),
+      return Column(
+        children: [
+          _buildFilterRow(),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(HCSpacing.md),
+              itemCount: 3,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: HCSpacing.md),
+                child: HCShimmerElements.matchCard(),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, color: HCColors.error, size: 48),
-            const SizedBox(height: HCSpacing.md),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: HCSpacing.md),
-            HCOutlineButton(label: 'Retry', onPressed: _loadSuggestions),
-          ],
-        ),
+      return Column(
+        children: [
+          _buildFilterRow(),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, color: HCColors.error, size: 48),
+                  const SizedBox(height: HCSpacing.md),
+                  Text(
+                    'Something went wrong',
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: HCSpacing.sm),
+                  Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HCColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: HCSpacing.md),
+                  HCButton(label: 'Retry', icon: Icons.refresh, onPressed: _loadSuggestions),
+                ],
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     if (_matches.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(HCSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(HCSpacing.lg),
-                decoration: BoxDecoration(
-                  color: HCColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(HCRadius.full),
+      return Column(
+        children: [
+          _buildFilterRow(),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(HCSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(HCSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: HCColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(HCRadius.full),
+                      ),
+                      child: const Icon(Icons.person_search, color: HCColors.primary, size: 48),
+                    ),
+                    const SizedBox(height: HCSpacing.lg),
+                    Text(
+                      'No matches yet — complete your profile for better results',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: HCColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: HCSpacing.sm),
+                    Text(
+                      'As more people join, you\'ll see matches here based on shared interests and location.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: HCColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: HCSpacing.lg),
+                    HCButton(
+                      label: 'Complete Profile',
+                      icon: Icons.person,
+                      onPressed: () {
+                        // Navigate to profile completion
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Profile completion coming soon!')),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: HCSpacing.md),
+                    HCOutlineButton(label: 'Refresh', onPressed: _loadSuggestions),
+                  ],
                 ),
-                child: const Icon(Icons.person_search, color: HCColors.primary, size: 48),
               ),
-              const SizedBox(height: HCSpacing.lg),
-              Text(
-                'No matches yet — complete your profile for better results',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: HCColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: HCSpacing.sm),
-              Text(
-                'As more people join, you\'ll see matches here based on shared interests and location.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: HCColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: HCSpacing.lg),
-              HCButton(
-                label: 'Complete Profile',
-                icon: Icons.person,
-                onPressed: () {
-                  // Navigate to profile completion
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile completion coming soon!')),
-                  );
-                },
-              ),
-              const SizedBox(height: HCSpacing.md),
-              HCOutlineButton(label: 'Refresh', onPressed: _loadSuggestions),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadSuggestions,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(HCSpacing.md),
-        itemCount: _matches.length,
-        itemBuilder: (context, index) => _buildMatchCard(_matches[index]),
+    if (_filteredMatches.isEmpty) {
+      return Column(
+        children: [
+          _buildFilterRow(),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(HCSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(HCSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: HCColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(HCRadius.full),
+                      ),
+                      child: const Icon(Icons.filter_list_off, color: HCColors.primary, size: 48),
+                    ),
+                    const SizedBox(height: HCSpacing.lg),
+                    Text(
+                      'No matches found with this filter',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: HCColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: HCSpacing.sm),
+                    Text(
+                      'Try a different filter or refresh to see all matches.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: HCColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        _buildFilterRow(),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadSuggestions,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(HCSpacing.md),
+              itemCount: _filteredMatches.length,
+              itemBuilder: (context, index) => _buildMatchCard(_filteredMatches[index]),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterRow() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: HCSpacing.lg,
+        vertical: HCSpacing.sm,
       ),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: HCColors.border, width: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Filter:',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: HCColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: HCSpacing.sm),
+          Expanded(
+            child: Row(
+              children: [
+                _buildFilterChip('All', FilterType.all),
+                const SizedBox(width: HCSpacing.sm),
+                _buildFilterChip('High Match', FilterType.highMatch),
+                const SizedBox(width: HCSpacing.sm),
+                _buildFilterChip('Nearby', FilterType.nearby),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, FilterType type) {
+    final isSelected = _selectedFilter == type;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: isSelected ? HCColors.textPrimary : HCColors.textSecondary,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) _onFilterChanged(type);
+      },
+      backgroundColor: HCColors.bgInput,
+      selectedColor: HCColors.primary,
+      side: BorderSide(
+        color: isSelected ? HCColors.primary : HCColors.border,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(HCRadius.md),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     );
   }
 

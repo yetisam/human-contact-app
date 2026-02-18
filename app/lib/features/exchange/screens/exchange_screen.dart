@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,8 @@ class ExchangeScreen extends ConsumerStatefulWidget {
   ConsumerState<ExchangeScreen> createState() => _ExchangeScreenState();
 }
 
-class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
+class _ExchangeScreenState extends ConsumerState<ExchangeScreen> 
+    with TickerProviderStateMixin {
   // Request fields
   bool _shareEmail = true;
   bool _sharePhone = false;
@@ -39,15 +41,32 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
   bool _approveShareEmail = true;
   bool _approveSharePhone = false;
 
+  // Confetti animation
+  late AnimationController _confettiController;
+  late Animation<double> _confettiAnimation;
+  bool _showConfetti = false;
+
   @override
   void initState() {
     super.initState();
+    _confettiController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+    _confettiAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _confettiController,
+      curve: Curves.easeOut,
+    ));
     _checkExchangeStatus();
   }
 
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -154,7 +173,18 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
       final data = await ref.read(exchangeServiceProvider).getReveal(_exchangeId!);
       if (!mounted) return;
 
-      setState(() => _revealData = data);
+      setState(() {
+        _revealData = data;
+        _showConfetti = true;
+      });
+
+      // Start confetti animation
+      _confettiController.forward();
+      Timer(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() => _showConfetti = false);
+        }
+      });
 
       // Start countdown timer
       if (data['revealExpiresAt'] != null) {
@@ -184,30 +214,38 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: HCColors.bgGradient),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(HCSpacing.md),
-                child: Row(
-                  children: [
-                    IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
-                    Text('Contact Exchange', style: Theme.of(context).textTheme.titleLarge),
-                  ],
-                ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(gradient: HCColors.bgGradient),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(HCSpacing.md),
+                    child: Row(
+                      children: [
+                        IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
+                        Text('Contact Exchange', style: Theme.of(context).textTheme.titleLarge),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(HCSpacing.lg),
+                      child: _buildContent(),
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(HCSpacing.lg),
-                  child: _buildContent(),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          
+          // Confetti overlay
+          if (_showConfetti && _status == 'reveal')
+            _buildConfettiOverlay(),
+        ],
       ),
     );
   }
@@ -631,5 +669,73 @@ class _ExchangeScreenState extends ConsumerState<ExchangeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildConfettiOverlay() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _confettiAnimation,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: ConfettiPainter(_confettiAnimation.value),
+              size: Size.infinite,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class ConfettiPainter extends CustomPainter {
+  final double progress;
+  final math.Random _random = math.Random(42); // Fixed seed for consistent pattern
+
+  ConfettiPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+
+    final paint = Paint()..style = PaintingStyle.fill;
+    
+    // Generate ~20 confetti pieces
+    for (int i = 0; i < 20; i++) {
+      final xStart = _random.nextDouble() * size.width;
+      final yStart = -50.0;
+      final fallDistance = size.height + 100;
+      
+      final x = xStart + (_random.nextDouble() - 0.5) * 100 * progress;
+      final y = yStart + fallDistance * progress;
+      
+      // Skip if fallen off screen
+      if (y > size.height + 50) continue;
+      
+      // Color variety
+      final colors = [
+        HCColors.primary,
+        HCColors.accent,
+        HCColors.success,
+        HCColors.primaryLight,
+        HCColors.accentLight,
+      ];
+      
+      paint.color = colors[i % colors.length].withValues(
+        alpha: (1.0 - progress * 0.3).clamp(0.0, 1.0),
+      );
+      
+      // Draw small circle
+      canvas.drawCircle(
+        Offset(x, y),
+        4.0 + _random.nextDouble() * 4.0,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(ConfettiPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }

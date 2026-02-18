@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../config/theme.dart';
 
 /// Primary gradient button
@@ -27,7 +28,10 @@ class HCButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(HCRadius.md),
       ),
       child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: isLoading ? null : onPressed != null ? () {
+          HapticFeedback.mediumImpact();
+          onPressed!();
+        } : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
@@ -78,7 +82,10 @@ class HCOutlineButton extends StatelessWidget {
       width: double.infinity,
       height: 52,
       child: OutlinedButton(
-        onPressed: onPressed,
+        onPressed: onPressed != null ? () {
+          HapticFeedback.lightImpact();
+          onPressed!();
+        } : null,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
